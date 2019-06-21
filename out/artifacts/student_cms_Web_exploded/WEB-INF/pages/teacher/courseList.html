@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>教师</title>
+	<link rel="stylesheet" href="${s.base}/res/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="${s.base}/res/css/public.css" media="all" />
+</head>
+<body class="childrenBody">
+<!-- 课程列表 -->
+<form class="layui-form">
+	<table id="courseList" lay-filter="courseList" ></table>
+	<!--操作-->
+	<script type="text/html" id="courseListBar">
+		{{#  if(d.complete ==0){ }}
+			<a class="layui-btn layui-btn-xs" lay-event="edit">结束课程</a>
+		{{# } else { }}
+			<a class="layui-btn layui-btn-xs" lay-event="detail">成绩概况</a>
+		{{# } }}
+	</script>
+</form>
+
+<!-- 弹窗中的成绩概况表 -->
+<form class="layui-form" id="model_score_table_form">
+	<table class="layui-table" id="model_score_table" lay-filter="model_score_table" ></table>
+</form>
+
+
+<script type="text/javascript" src="${s.base}/res/layui/layui.js"></script>
+
+<script type="text/javascript">
+	layui.use(['layer','table'],function(){
+		var $ = $ = layui.jquery;
+		//courseList列表
+		tableIns = layui.table.render({
+			elem: "#courseList",
+			url : "/CMS/course/getMyCourse.html",
+			request: {
+				pageName: "curr" //页码的参数名称
+				,limitName: "nums" //每页数据量的参数名
+			},
+			cellMinWidth : 95,
+			page : true,
+			height : "full-25",
+			limits : [10,15,20,25],
+			limit : 10,
+			loading : true,
+			id : "courseListTable",
+			cols : [[
+				{field: "id", title: "课程编号", sort:true, width:100, align:"left"},
+				{field: "courseName", title: "课程名",minWidth:120, align:"left"},
+				{field: "teacherName", title: "任课教师",width:150, align:"center"},
+				{field: "startDate", title: "开始时间", sort:true, minWidth:100, align:"center"},
+				{field: "endDate", title: "结束时间", minWidth:100, align:"center"},
+				{field: "classHour", title: "课时", width:60, align:"center"},
+				{field: "testMode", title: "考核方式", minWidth:100, align:"center"},
+				{field: "studentNum", title: "最大人数", minWidth:80, align:"center"},
+				{field: "choiceNum", title: "已选", width:80, align:"center"},
+				{title: "操作", width:120, templet:"#courseListBar",fixed:"right",align:"center"}
+			]]
+		});
+
+
+
+     //列表操作
+    layui.table.on("tool(courseList)", function(obj){
+		let layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+		if(layEvent === 'edit') {     //结课
+			layer.confirm('请确保结束课程前已提交学生成绩！确定结束此课程？', {icon: 3, title: '提示信息'}, function (index) {
+				var data = obj.data;
+				$.ajax({
+					type: "get",
+					data: { id: data.id },
+					url: "/CMS/course/complete.html",
+					success:function(res) {
+						if (res == true) {
+							tableIns.reload();
+							layer.close(index);
+						}else {
+							layer.msg(res, {icon: 5,time:1000});
+						}
+					}
+				});
+			});
+		}else{     //查看成绩概况
+			let cid = obj.data.baseCourseId;
+			layui.use(['layer','table'],function() {
+				var $ = $ = layui.jquery;
+				//成绩概况列表
+				layui.table.render({
+					elem: "#model_score_table",
+					url: "/CMS/score/getAverage.html?cid="+cid,
+					height: "full-25",
+					loading: true,
+					page:false,
+					id: "model_score_table_id",
+					cols: [[
+						{field: "cname", title: "课程名", width: 180, align: "center"},
+						{field: "major", title: "专业", width: 180, align: "center"},
+						{field: "grade", title: "班级", width: 130, align: "center"},
+						{field: "stu_number", title: "人数", width: 80, align: "center"},
+						{field: "average", title: "平均分", sort: true, width: 100, align: "center"},
+						{field: "max", title: "最高分", width: 90, align: "center"},
+						{field: "min", title: "最低分", width: 90, align: "center"},
+						{field: "pass_rate", title: "合格率", width: 140, align: "center"}
+					]],
+				});
+			});
+			//列表操作
+			layui.table.on("tool(model_score_table)", function(obj) {
+			});
+			layer.open({
+				type:1,    //参照官方文档：0（信息框，默认）1（页面层）2（iframe层）3（加载层）4（tips层）
+				title: '成绩概况'
+				,content: $('#model_score_table_form'),    // 显示form表格
+				area: ['1000px','420px']
+			});
+		}
+    });
+
+
+});
+</script>
+</body>
+</html>
