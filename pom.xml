@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>4.3.6.RELEASE</version>
+            <version>5.3.18</version>
         </dependency>
         <!-- spring上下文依赖包 -->
         <dependency>
